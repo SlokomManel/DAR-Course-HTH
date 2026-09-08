@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Diagnosis Simulator - Root Cause Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .scenario-box {
+            background: #ffe8e8;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #e74c3c;
+            margin-bottom: 30px;
+        }
+
+        .scenario-title {
+            font-weight: bold;
+            color: #c0392b;
+            margin-bottom: 8px;
+        }
+
+        .scenario-text {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid #e74c3c;
+        }
+
+        .input-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-title .badge {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .input-subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .slider-group {
+            margin-bottom: 25px;
+        }
+
+        .slider-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .slider-value {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #ff6b6b 0%, #ffd93d 50%, #6bcf7f 100%);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #e74c3c;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #e74c3c;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .slider-range {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #999;
+            font-weight: bold;
+        }
+
+        .output-section {
+            background: #f0f7ff;
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid #3498db;
+        }
+
+        .output-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .output-title .badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .output-subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .inferred-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #3498db;
+            margin-bottom: 15px;
+        }
+
+        .inferred-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .inferred-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cleanliness-emoji {
+            font-size: 40px;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .result-label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-bar {
+            background: rgba(255,255,255,0.3);
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .result-bar-fill {
+            height: 100%;
+            background: #2ecc71;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            transition: width 0.3s ease;
+        }
+
+        .result-interpretation {
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .formula-box {
+            background: #fffbea;
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 4px solid #f39c12;
+            margin-top: 30px;
+            font-size: 13px;
+        }
+
+        .formula-title {
+            font-weight: bold;
+            color: #d68910;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .formula-text {
+            color: #555;
+            line-height: 1.8;
+            font-family: 'Courier New', monospace;
+        }
+
+        .formula-highlight {
+            background: #fff9e6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #d68910;
+            font-weight: bold;
+        }
+
+        .insights-box {
+            background: #e8f8f5;
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 4px solid #16a085;
+            margin-top: 30px;
+        }
+
+        .insights-title {
+            font-weight: bold;
+            color: #117a65;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .insights-text {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reset {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .btn-scenario {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-scenario:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 22px;
+            }
+
+            .result-value {
+                font-size: 36px;
+            }
+
+            .inferred-value {
+                font-size: 24px;
+            }
+        }
+
+        .warning-text {
+            color: #c0392b;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .success-text {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🔍 Simulator</h1>
+        <p class="subtitle">Work backwards from guest feedback to identify the root cause</p>
+
+        <div class="scenario-box">
+            <div class="scenario-title">📋 SCENARIO:</div>
+            <div class="scenario-text">
+                You're a hotel manager. Guest ratings are declining and reviews are getting worse. 
+                What's causing this? Use this simulator to diagnose the problem by entering guest feedback scores. 
+                The system will infer the likely root cause and show how it affects occupancy.
+            </div>
+        </div>
+
+        <div class="layout">
+            <!-- INPUT SECTION -->
+            <div class="input-section">
+                <div class="input-title">
+                    📊 OBSERVED PROBLEMS (What you measure)
+                    <span class="badge">Your Input</span>
+                </div>
+                <div class="input-subtitle">Drag these sliders to simulate guest feedback data</div>
+
+                <!-- Rating Input -->
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>⭐ Guest Rating Score</span>
+                        <span class="slider-value" id="ratingDisplay">3.0/5</span>
+                    </div>
+                    <input type="range" id="ratingSlider" min="1" max="5" step="0.1" value="3">
+                    <div class="slider-range">
+                        <span>1 (Terrible)</span>
+                        <span>5 (Excellent)</span>
+                    </div>
+                </div>
+
+                <!-- Reviews Input -->
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>💬 Review Quality Score</span>
+                        <span class="slider-value" id="reviewsDisplay">2.5/5</span>
+                    </div>
+                    <input type="range" id="reviewsSlider" min="1" max="5" step="0.1" value="2.5">
+                    <div class="slider-range">
+                        <span>1 (Very Negative)</span>
+                        <span>5 (Very Positive)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OUTPUT SECTION -->
+            <div class="output-section">
+                <div class="output-title">
+                    🎯 DIAGNOSIS (What we infer)
+                    <span class="badge">System Output</span>
+                </div>
+                <div class="output-subtitle">Based on guest feedback, the root cause is inferred</div>
+
+                <!-- Inferred Cleanliness -->
+                <div class="inferred-box">
+                    <div class="inferred-label">🔍 ROOT CAUSE - Inferred Cleanliness Level:</div>
+                    <div class="inferred-value">
+                        <span class="cleanliness-emoji" id="cleanlinessEmoji">🏚️</span>
+                        <span id="cleanlinessPercent">36%</span>
+                    </div>
+                    <div style="font-size: 12px; color: #555; margin-top: 8px;" id="cleanlinessLabel">
+                        Needs Cleaning
+                    </div>
+                </div>
+
+                <!-- Occupancy Result -->
+                <div class="result-box">
+                    <div class="result-label">📈 OCCUPANCY IMPACT:</div>
+                    <div class="result-value" id="occupancyPercent">48%</div>
+                    <div class="result-bar">
+                        <div class="result-bar-fill" id="occupancyBar" style="width: 48%;">48%</div>
+                    </div>
+                    <div class="result-interpretation" id="occupancyInterpretation">
+                        With poor ratings and negative reviews, occupancy is LOW. Guests prefer other hotels.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMULA EXPLANATION -->
+        <div class="formula-box">
+            <div class="formula-title">📐 How We Diagnose:</div>
+            <div class="formula-text">
+                <div style="margin-bottom: 10px;">
+                    We infer Cleanliness (root cause) based on guest feedback:
+                </div>
+                <div style="background: white; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                    <span class="formula-highlight">Cleanliness</span> = 
+                    (<span class="formula-highlight" id="formulaRating">0.40</span> × Rating) + 
+                    (<span class="formula-highlight" id="formulaReviews">0.60</span> × Reviews)
+                </div>
+                <div style="margin-bottom: 10px;">
+                    Then we calculate Occupancy (the business impact):
+                </div>
+                <div style="background: white; padding: 10px; border-radius: 5px;">
+                    <span class="formula-highlight">Occupancy %</span> = 
+                    (0.4 × Rating) + (0.3 × Reviews) + (0.3 × Cleanliness)
+                </div>
+            </div>
+        </div>
+
+        <!-- INSIGHTS -->
+        <div class="insights-box">
+            <div class="insights-title">💡 Key Learning:</div>
+            <div class="insights-text">
+                ✓ <strong>This is ROOT CAUSE ANALYSIS.</strong> We don't know directly WHY ratings are low, but we can infer it's likely cleanliness.
+            </div>
+            <div class="insights-text">
+                ✓ <strong>Multiple factors matter.</strong> Occupancy depends on ratings, reviews, AND cleanliness together—not just one.
+            </div>
+            <div class="insights-text">
+                ✓ <strong>Diagnosis leads to action.</strong> If cleanliness is low, the hotel manager would invest in housekeeping to fix it.
+            </div>
+            <div class="insights-text">
+                ✓ <strong>This is how businesses work.</strong> You see a problem (low ratings), diagnose the cause (probably cleanliness), then take action.
+            </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="button-group">
+            <button class="btn btn-reset" onclick="resetSimulator()">↺ Reset</button>
+            <button class="btn btn-scenario" onclick="scenario1()">Scenario: Poor Service</button>
+            <button class="btn btn-scenario" onclick="scenario2()">Scenario: Everything Good</button>
+        </div>
+
+        <div class="footer">
+            <p>🔍 Simulator</p>
+            <p>💻 DAR - Data Analytics & Research | Year 1 | Hotelschool The Hague</p>
+        </div>
+    </div>
+
+    <script>
+        const ratingSlider = document.getElementById('ratingSlider');
+        const reviewsSlider = document.getElementById('reviewsSlider');
+
+        const ratingDisplay = document.getElementById('ratingDisplay');
+        const reviewsDisplay = document.getElementById('reviewsDisplay');
+        const cleanlinessPercent = document.getElementById('cleanlinessPercent');
+        const cleanlinessEmoji = document.getElementById('cleanlinessEmoji');
+        const cleanlinessLabel = document.getElementById('cleanlinessLabel');
+        const occupancyPercent = document.getElementById('occupancyPercent');
+        const occupancyBar = document.getElementById('occupancyBar');
+        const occupancyInterpretation = document.getElementById('occupancyInterpretation');
+
+        // Scenario quotes
+        const scenarioQuotes = [
+            "\"Dirty rooms, couldn't sleep.\" ⭐",
+            "\"Poor condition, not coming back.\" ⭐⭐",
+            "\"Acceptable, could be better.\" ⭐⭐⭐",
+            "\"Good quality, satisfied.\" ⭐⭐⭐⭐",
+            "\"Impeccable! Will definitely return!\" ⭐⭐⭐⭐⭐"
+        ];
+
+        function updateSimulator() {
+            const rating = parseFloat(ratingSlider.value);
+            const reviews = parseFloat(reviewsSlider.value);
+
+            // Update input displays
+            ratingDisplay.textContent = rating.toFixed(1) + '/5';
+            reviewsDisplay.textContent = reviews.toFixed(1) + '/5';
+
+            // DIAGNOSE: Infer cleanliness from rating and reviews
+            // Weights: ratings 40%, reviews 60% (reviews are more indicative of cleanliness)
+            const inferredCleanliness = ((rating * 0.40) + (reviews * 0.60)) / 5 * 100;
+            const cleanlinessRounded = Math.round(inferredCleanliness);
+
+            cleanlinessPercent.textContent = cleanlinessRounded + '%';
+
+            // Update cleanliness visual
+            if (cleanlinessRounded < 20) {
+                cleanlinessEmoji.textContent = '🏚️';
+                cleanlinessLabel.textContent = 'Status: Very Dirty - URGENT action needed!';
+                cleanlinessLabel.classList.add('warning-text');
+            } else if (cleanlinessRounded < 40) {
+                cleanlinessEmoji.textContent = '🏩';
+                cleanlinessLabel.textContent = 'Status: Dirty - Needs immediate cleaning';
+                cleanlinessLabel.classList.add('warning-text');
+            } else if (cleanlinessRounded < 60) {
+                cleanlinessEmoji.textContent = '🏨';
+                cleanlinessLabel.textContent = 'Status: Moderate - Could be improved';
+                cleanlinessLabel.style.color = '#666';
+            } else if (cleanlinessRounded < 80) {
+                cleanlinessEmoji.textContent = '✨🏨';
+                cleanlinessLabel.textContent = 'Status: Clean - Good condition';
+                cleanlinessLabel.classList.remove('warning-text');
+            } else {
+                cleanlinessEmoji.textContent = '✨🏨✨';
+                cleanlinessLabel.textContent = 'Status: Spotless - Excellent!';
+                cleanlinessLabel.classList.add('success-text');
+            }
+
+            // CALCULATE: Occupancy based on ALL THREE factors
+            const occupancy = Math.round((rating * 0.4 + reviews * 0.3 + (cleanlinessRounded / 100) * 5 * 0.3) / 5 * 100);
+
+            occupancyPercent.textContent = occupancy + '%';
+            occupancyBar.style.width = occupancy + '%';
+            occupancyBar.textContent = occupancy + '%';
+
+            // Update occupancy interpretation
+            if (occupancy < 30) {
+                occupancyInterpretation.textContent = 
+                    '⚠️ CRITICAL: With poor ratings (' + rating.toFixed(1) + '/5) and negative reviews (' + reviews.toFixed(1) + '/5), very few guests want to book. Root cause is likely poor cleanliness (' + cleanlinessRounded + '%). Immediate action needed!';
+            } else if (occupancy < 50) {
+                occupancyInterpretation.textContent = 
+                    '⚠️ LOW: Guest feedback is weak. Occupancy is struggling at ' + occupancy + '%. Address the cleanliness issue to improve ratings and attract more bookings.';
+            } else if (occupancy < 70) {
+                occupancyInterpretation.textContent = 
+                    '✓ MODERATE: Occupancy is fair at ' + occupancy + '%. Some guests are booking, but there\'s room to improve. Focus on raising cleanliness standards.';
+            } else if (occupancy < 85) {
+                occupancyInterpretation.textContent = 
+                    '✓ GOOD: Occupancy is solid at ' + occupancy + '%. Guests are satisfied with ratings (' + rating.toFixed(1) + '/5) and reviews. Keep up the good work!';
+            } else {
+                occupancyInterpretation.textContent = 
+                    '✅ EXCELLENT: Occupancy at ' + occupancy + '%! With high ratings (' + rating.toFixed(1) + '/5) and positive reviews (' + reviews.toFixed(1) + '/5), guests are choosing your hotel. Maintain this cleanliness standard!';
+            }
+        }
+
+        function resetSimulator() {
+            ratingSlider.value = 3;
+            reviewsSlider.value = 2.5;
+            updateSimulator();
+        }
+
+        function scenario1() {
+            // Poor service scenario
+            ratingSlider.value = 1.5;
+            reviewsSlider.value = 1.8;
+            updateSimulator();
+            alert('📋 Scenario: Poor Service\n\nRating dropped to 1.5/5 and reviews are negative (1.8/5). What does this tell you about cleanliness?');
+        }
+
+        function scenario2() {
+            // Everything good scenario
+            ratingSlider.value = 4.8;
+            reviewsSlider.value = 4.6;
+            updateSimulator();
+            alert('📋 Scenario: Excellent Service\n\nRating is 4.8/5 and reviews are glowing (4.6/5). Notice how cleanliness is inferred to be high!');
+        }
+
+        ratingSlider.addEventListener('input', updateSimulator);
+        reviewsSlider.addEventListener('input', updateSimulator);
+
+        // Initialize
+        updateSimulator();
+    </script>
+</body>
+</html>
