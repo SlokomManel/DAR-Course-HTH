@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Measuring the Spread</title>
+  <style>
+    :root {
+      --primary: #1a5e5e;
+      --accent: #d4a574;
+      --light-bg: #faf8f3;
+      --border: #e8e3dd;
+      --text-dark: #2d2d2d;
+      --text-light: #666;
+      --success: #4b7a4b;
+      --warning: #a8824a;
+      --error: #9c5c5c;
+      --light-teal: #e8f3f3;
+      --light-gold: #fef5e8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--light-bg);
+      color: var(--text-dark);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .page-wrapper {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 42px;
+      color: var(--primary);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 19px;
+      color: var(--text-light);
+    }
+
+    .main-layout {
+      display: block;
+      margin-bottom: 30px;
+    }
+
+    .data-panel {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      height: fit-content;
+      position: static;
+      margin-bottom: 30px;
+    }
+
+    .data-panel h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #d4e5e5;
+    }
+
+    .data-variable {
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-variable:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .data-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .data-values {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.6;
+      font-family: 'Courier New', monospace;
+      background: var(--light-bg);
+      padding: 10px;
+      border-radius: 6px;
+      word-break: break-all;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-light);
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+      margin-bottom: -2px;
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .section {
+      background: white;
+      padding: 35px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* Flip Cards */
+    .flip-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .flip-card {
+      perspective: 1000px;
+      cursor: pointer;
+      height: 320px;
+    }
+
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flip-card-front, .flip-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      border: 2px solid var(--border);
+    }
+
+    .flip-card-front {
+      background: linear-gradient(135deg, var(--light-teal) 0%, var(--light-gold) 100%);
+      color: var(--primary);
+    }
+
+    .flip-card-back {
+      background: white;
+      color: var(--text-dark);
+      transform: rotateY(180deg);
+    }
+
+    .flip-card-front h3 {
+      font-size: 26px;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .flip-card-front p {
+      font-size: 15px;
+      color: var(--primary);
+      opacity: 0.85;
+    }
+
+    .flip-card-back h3 {
+      font-size: 26px;
+      color: var(--accent);
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .flip-card-back p {
+      font-size: 14px;
+      color: var(--text-dark);
+      line-height: 1.5;
+    }
+
+    .flip-hint {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: auto;
+      padding-top: 10px;
+    }
+
+    /* Practice Section */
+    .practice-section {
+      background: white;
+      padding: 35px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+
+    .question-card {
+      margin-bottom: 30px;
+    }
+
+    .question-card h3 {
+      font-size: 19px;
+      margin-bottom: 8px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .variable-label {
+      display: inline-block;
+      background: var(--light-gold);
+      color: var(--accent);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .question-text {
+      font-size: 18px;
+      margin-bottom: 22px;
+      color: var(--text-dark);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option {
+      padding: 16px 20px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 16px;
+      color: var(--text-dark);
+      font-weight: 500;
+    }
+
+    .option:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--light-gold);
+    }
+
+    .option.selected {
+      border-color: var(--primary);
+      background: var(--light-teal);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .option:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .option.correct {
+      border-color: var(--success);
+      background: #e8f5e8;
+      color: var(--success);
+    }
+
+    .option.incorrect {
+      border-color: var(--error);
+      background: #f5e8e8;
+      color: var(--error);
+    }
+
+    .feedback {
+      padding: 18px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 15px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .feedback.show {
+      display: block;
+    }
+
+    .feedback.correct {
+      background: #e8f5e8;
+      color: var(--success);
+      border-left: 4px solid var(--success);
+    }
+
+    .feedback.incorrect {
+      background: #f5e8e8;
+      color: var(--error);
+      border-left: 4px solid var(--error);
+    }
+
+    .feedback-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .explanation {
+      padding: 16px;
+      background: var(--light-bg);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: var(--text-dark);
+      line-height: 1.6;
+      display: none;
+    }
+
+    .explanation.show {
+      display: block;
+    }
+
+    .calc-box {
+      padding: 14px;
+      background: var(--light-teal);
+      border-left: 4px solid var(--primary);
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--primary);
+      margin-top: 10px;
+      display: none;
+    }
+
+    .calc-box.show {
+      display: block;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #0d3e3e;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #c8945a;
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Results Section */
+    .results-container {
+      background: white;
+      padding: 35px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .results-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .score-display {
+      font-size: 56px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .score-label {
+      font-size: 17px;
+      color: var(--text-light);
+    }
+
+    .results-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .result-item {
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid var(--border);
+      background: var(--light-bg);
+    }
+
+    .result-item.all-correct {
+      border-left-color: var(--success);
+      background: #e8f5e8;
+    }
+
+    .result-item.partial {
+      border-left-color: var(--warning);
+      background: var(--light-gold);
+    }
+
+    .result-item.incorrect {
+      border-left-color: var(--error);
+      background: #f5e8e8;
+    }
+
+    .result-variable {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .result-details {
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-light);
+      font-size: 16px;
+    }
+
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="header">
+      <h1>📊 Measuring the Spread</h1>
+      <p>Understanding variation, range, and diversity in Skotel guest data</p>
+    </div>
+
+    <!-- DATA PANEL (TOP) -->
+    <div class="data-panel">
+      <h3>📋 Skotel Guest Data</h3>
+
+      <table style="width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 10px;">
+        <thead>
+          <tr style="background: #f0f0f0; border-bottom: 1px solid #ddd;">
+            <th style="padding: 8px; text-align: center; font-weight: 700;">ID</th>
+            <th style="padding: 8px; text-align: center; font-weight: 700;">Spend</th>
+            <th style="padding: 8px; text-align: center; font-weight: 700;">Bfast</th>
+            <th style="padding: 8px; text-align: center; font-weight: 700;">Age</th>
+            <th style="padding: 8px; text-align: center; font-weight: 700;">Freq</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">1</td>
+            <td style="padding: 6px; text-align: center;">€10</td>
+            <td style="padding: 6px; text-align: center;">A</td>
+            <td style="padding: 6px; text-align: center;">18</td>
+            <td style="padding: 6px; text-align: center;">A</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">2</td>
+            <td style="padding: 6px; text-align: center;">€40</td>
+            <td style="padding: 6px; text-align: center;">A</td>
+            <td style="padding: 6px; text-align: center;">20</td>
+            <td style="padding: 6px; text-align: center;">B</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">3</td>
+            <td style="padding: 6px; text-align: center;">€10</td>
+            <td style="padding: 6px; text-align: center;">C</td>
+            <td style="padding: 6px; text-align: center;">78</td>
+            <td style="padding: 6px; text-align: center;">A</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">4</td>
+            <td style="padding: 6px; text-align: center;">€80</td>
+            <td style="padding: 6px; text-align: center;">E</td>
+            <td style="padding: 6px; text-align: center;">28</td>
+            <td style="padding: 6px; text-align: center;">C</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">5</td>
+            <td style="padding: 6px; text-align: center;">€50</td>
+            <td style="padding: 6px; text-align: center;">E</td>
+            <td style="padding: 6px; text-align: center;">27</td>
+            <td style="padding: 6px; text-align: center;">C</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">6</td>
+            <td style="padding: 6px; text-align: center;">€25</td>
+            <td style="padding: 6px; text-align: center;">D</td>
+            <td style="padding: 6px; text-align: center;">23</td>
+            <td style="padding: 6px; text-align: center;">B</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">7</td>
+            <td style="padding: 6px; text-align: center;">€20</td>
+            <td style="padding: 6px; text-align: center;">D</td>
+            <td style="padding: 6px; text-align: center;">19</td>
+            <td style="padding: 6px; text-align: center;">B</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">8</td>
+            <td style="padding: 6px; text-align: center;">€75</td>
+            <td style="padding: 6px; text-align: center;">E</td>
+            <td style="padding: 6px; text-align: center;">31</td>
+            <td style="padding: 6px; text-align: center;">C</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e8e3dd;">
+            <td style="padding: 6px; text-align: center;">9</td>
+            <td style="padding: 6px; text-align: center;">€30</td>
+            <td style="padding: 6px; text-align: center;">A</td>
+            <td style="padding: 6px; text-align: center;">27</td>
+            <td style="padding: 6px; text-align: center;">C</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px; text-align: center;">10</td>
+            <td style="padding: 6px; text-align: center;">€35</td>
+            <td style="padding: 6px; text-align: center;">C</td>
+            <td style="padding: 6px; text-align: center;">23</td>
+            <td style="padding: 6px; text-align: center;">B</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="font-size: 11px; color: #999; margin-top: 8px; line-height: 1.4;">
+        <strong>Legend:</strong><br>
+        Bfast: A=Included, C=Continental, D=Deluxe, E=Premium<br>
+        Freq: A=First, B=1-4x/mo, C=5-12x/mo
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('explore')">Explore the Concepts</button>
+      <button class="tab-btn" onclick="showTab('practice')">Practice with Real Data</button>
+      <button class="tab-btn" onclick="showTab('results')">Your Progress</button>
+    </div>
+
+    <div class="main-layout">
+      <div>
+        <!-- Explore Tab -->
+        <div id="explore" class="tab-content active">
+          <div class="section">
+            <div class="flip-cards">
+              <!-- Nominal: Variation Ratio -->
+              <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                  <div class="flip-card-front">
+                    <h3>NOMINAL</h3>
+                    <p>Categories with no order</p>
+                    <p class="flip-hint">Click to see the measure</p>
+                  </div>
+                  <div class="flip-card-back">
+                    <h3>Variation Ratio</h3>
+                    <p><strong>Breakfast Type:</strong> How diverse are the choices?</p>
+                    <p>VR = 0 means everyone picks the same. VR = 1 means total variety.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ordinal: Inter-Quartile Range -->
+              <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                  <div class="flip-card-front">
+                    <h3>ORDINAL</h3>
+                    <p>Categories in order</p>
+                    <p class="flip-hint">Click to see the measure</p>
+                  </div>
+                  <div class="flip-card-back">
+                    <h3>Inter-Quartile Range</h3>
+                    <p><strong>Visit Frequency:</strong> Where do the middle 50% fall?</p>
+                    <p>IQR shows the spread of typical guests, ignoring extremes.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interval/Ratio: Depends on Outliers -->
+              <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                  <div class="flip-card-front">
+                    <h3>INTERVAL/RATIO</h3>
+                    <p>Numbers with meaning</p>
+                    <p class="flip-hint">Click to see the measures</p>
+                  </div>
+                  <div class="flip-card-back">
+                    <h3>Standard Deviation or IQR?</h3>
+                    <p><strong>Spending & Age:</strong> Check for outliers first!</p>
+                    <p>Clean data? Use SD. Outliers? Use IQR to protect from extremes.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Practice Tab -->
+        <div id="practice" class="tab-content">
+          <div class="practice-section">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div id="questionContainer"></div>
+
+            <div id="emptyResults" class="empty-state" style="display: none;">
+              <p>Complete all questions to see your results →</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results" class="tab-content">
+          <div class="results-container">
+            <div id="resultsContent" class="empty-state">
+              <p>Your results will appear here after you practice.</p>
+              <button class="btn btn-secondary" onclick="showTab('practice')">Start Practicing →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const spreadData = [
+      {
+        variable: 'Spending (€)',
+        q4Question: 'What type of measurement level is "spending in euros"?',
+        q4Options: ['Nominal', 'Ordinal', 'Interval', 'Ratio'],
+        q4Answer: 'Ratio',
+        q4Explanation: 'Spending has a true zero (€0 means no spending) and meaningful intervals. That\'s ratio data.',
+        q5Question: 'Which spread measure fits best?',
+        q5Options: ['Variation Ratio', 'Inter-Quartile Range', 'Standard Deviation'],
+        q5Answer: 'Standard Deviation',
+        q5Explanation: 'No extreme outliers in spending (€10 to €80 is reasonable range). Standard Deviation (€24.52) shows how much guests\' spending varies around the average of €37.50.',
+        calculation: 'SD = €24.52 (average distance from mean €37.50)'
+      },
+      {
+        variable: 'Breakfast Type',
+        q4Question: 'What type of measurement level is "breakfast type"?',
+        q4Options: ['Nominal', 'Ordinal', 'Interval', 'Ratio'],
+        q4Answer: 'Nominal',
+        q4Explanation: 'Breakfast types (Included A, Continental C, Deluxe D, Premium E) are just categories with no order. That\'s nominal data.',
+        q5Question: 'Which spread measure fits best?',
+        q5Options: ['Variation Ratio', 'Inter-Quartile Range', 'Standard Deviation'],
+        q5Answer: 'Variation Ratio',
+        q5Explanation: 'For nominal data, Variation Ratio (VR = 0.7) measures diversity. It shows good variety in breakfast choices—some preference for Premium/Included, but not overwhelming.',
+        calculation: 'VR = 0.7 (0 = all agree, 1 = total chaos)'
+      },
+      {
+        variable: 'Age (years)',
+        q4Question: 'What type of measurement level is "guest age"?',
+        q4Options: ['Nominal', 'Ordinal', 'Interval', 'Ratio'],
+        q4Answer: 'Ratio',
+        q4Explanation: 'Age has a true zero (birth) and meaningful intervals. It\'s ratio data. Note: One guest is 78 years old (extreme outlier)!',
+        q5Question: 'Which spread measure fits best?',
+        q5Options: ['Variation Ratio', 'Inter-Quartile Range', 'Standard Deviation'],
+        q5Answer: 'Inter-Quartile Range',
+        q5Explanation: 'That 78-year-old is an extreme outlier! IQR (8 years, from ages ~20 to ~28) protects us by ignoring this extreme, while SD would exaggerate the spread.',
+        calculation: 'IQR = 8 years (middle 50%, Q1≈20 to Q3≈28)'
+      },
+      {
+        variable: 'Visit Frequency',
+        q4Question: 'What type of measurement level is "visit frequency"?',
+        q4Options: ['Nominal', 'Ordinal', 'Interval', 'Ratio'],
+        q4Answer: 'Ordinal',
+        q4Explanation: 'Visit categories (A=First, B=1-4x/month, C=5-12x/month) have a natural order from less to more frequent. That\'s ordinal data.',
+        q5Question: 'Which spread measure fits best?',
+        q5Options: ['Variation Ratio', 'Inter-Quartile Range', 'Standard Deviation'],
+        q5Answer: 'Inter-Quartile Range',
+        q5Explanation: 'For ordinal data, IQR (B to C) shows where the middle 50% of guests fall in frequency, respecting the natural order from occasional to regular.',
+        calculation: 'IQR = "B" to "C" (from 1-4x/month to 5-12x/month)'
+      }
+    ];
+
+    let currentVariable = 0;
+    let currentQuestion = 1;
+    let answers = { q4: [null, null, null, null], q5: [null, null, null, null] };
+    let selectedOptions = { q4: [null, null, null, null], q5: [null, null, null, null] };
+    let answered = { q4: [false, false, false, false], q5: [false, false, false, false] };
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+
+      if (tabName === 'practice') {
+        loadQuestion();
+      } else if (tabName === 'results') {
+        displayResults();
+      }
+    }
+
+    function loadQuestion() {
+      const data = spreadData[currentVariable];
+      const isQ4 = currentQuestion === 4;
+      const question = isQ4 ? data.q4Question : data.q5Question;
+      const options = isQ4 ? data.q4Options : data.q5Options;
+      const answerKey = isQ4 ? 'q4' : 'q5';
+      const questionNum = isQ4 ? 'Q4' : 'Q5';
+
+      const html = `
+        <div class="question-card">
+          <div class="variable-label">${data.variable}</div>
+          <h3>${questionNum}: ${question}</h3>
+
+          <div class="options" id="optionsContainer">
+            ${options.map((opt, idx) => `
+              <button class="option" onclick="selectOption(${idx}, '${answerKey}', '${opt}')"
+                ${answered[answerKey][currentVariable] ? 'disabled' : ''}>
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+
+          <div class="feedback" id="feedback"></div>
+          <div class="explanation" id="explanation"></div>
+          <div class="calc-box" id="calcBox"></div>
+
+          <div class="button-group">
+            <button class="btn btn-primary" onclick="submitAnswer('${answerKey}')"
+              id="submitBtn" ${answered[answerKey][currentVariable] ? 'style="display:none;"' : ''}>
+              Check Answer
+            </button>
+            <button class="btn btn-secondary" onclick="nextQuestion()"
+              id="nextBtn" ${!answered[answerKey][currentVariable] ? 'style="display:none;"' : ''}>
+              ${currentVariable === 3 && currentQuestion === 5 ? 'See Results →' : 'Next →'}
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('questionContainer').innerHTML = html;
+      updateProgress();
+    }
+
+    function selectOption(idx, answerKey, optionText) {
+      document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+      document.querySelectorAll('.option')[idx].classList.add('selected');
+      selectedOptions[answerKey][currentVariable] = optionText;
+    }
+
+    function submitAnswer(answerKey) {
+      const data = spreadData[currentVariable];
+      const correctAnswer = answerKey === 'q4' ? data.q4Answer : data.q5Answer;
+      const explanation = answerKey === 'q4' ? data.q4Explanation : data.q5Explanation;
+      const isCorrect = selectedOptions[answerKey][currentVariable] === correctAnswer;
+
+      answers[answerKey][currentVariable] = isCorrect;
+      answered[answerKey][currentVariable] = true;
+
+      const feedbackEl = document.getElementById('feedback');
+      feedbackEl.classList.add('show');
+      feedbackEl.classList.add(isCorrect ? 'correct' : 'incorrect');
+      feedbackEl.innerHTML = `
+        <div class="feedback-title">${isCorrect ? '✓ Correct!' : '✗ Not quite.'}</div>
+        <div>${explanation}</div>
+      `;
+
+      const explanationEl = document.getElementById('explanation');
+      explanationEl.classList.add('show');
+      explanationEl.innerHTML = explanation;
+
+      if (data.calculation) {
+        const calcEl = document.getElementById('calcBox');
+        calcEl.classList.add('show');
+        calcEl.innerHTML = data.calculation;
+      }
+
+      document.querySelectorAll('.option').forEach(opt => opt.disabled = true);
+      document.getElementById('submitBtn').style.display = 'none';
+      document.getElementById('nextBtn').style.display = 'block';
+
+      document.querySelectorAll('.option').forEach((opt, idx) => {
+        const optText = opt.textContent.trim();
+        if (optText === correctAnswer) {
+          opt.classList.add('correct');
+        } else if (optText === selectedOptions[answerKey][currentVariable]) {
+          opt.classList.add('incorrect');
+        }
+      });
+    }
+
+    function nextQuestion() {
+      if (currentQuestion === 4) {
+        currentQuestion = 5;
+      } else {
+        currentQuestion = 4;
+        currentVariable++;
+      }
+
+      if (currentVariable < 4) {
+        loadQuestion();
+      } else {
+        showTab('results');
+      }
+    }
+
+    function updateProgress() {
+      const total = 8;
+      const completed = Object.values(answers).flat().filter(a => a !== null).length;
+      const percentage = (completed / total) * 100;
+      document.getElementById('progressFill').style.width = percentage + '%';
+    }
+
+    function displayResults() {
+      const allAnswered = answered.q4.every(a => a) && answered.q5.every(a => a);
+
+      if (!allAnswered) {
+        document.getElementById('resultsContent').innerHTML = `
+          <p>Complete all practice questions to see your results.</p>
+          <button class="btn btn-secondary" onclick="showTab('practice')">Continue Practicing →</button>
+        `;
+        return;
+      }
+
+      const score = Object.values(answers).flat().filter(a => a === true).length;
+      let resultsHtml = `
+        <div class="results-header">
+          <div class="score-display">${score}/8</div>
+          <div class="score-label">Questions Answered Correctly</div>
+        </div>
+        <div class="results-list">
+      `;
+
+      spreadData.forEach((data, idx) => {
+        const q4Correct = answers.q4[idx];
+        const q5Correct = answers.q5[idx];
+        const bothCorrect = q4Correct && q5Correct;
+        const status = bothCorrect ? 'all-correct' : (q4Correct || q5Correct ? 'partial' : 'incorrect');
+
+        resultsHtml += `
+          <div class="result-item ${status}">
+            <div class="result-variable">${data.variable}</div>
+            <div class="result-details">
+              Q4 (Data Type): ${q4Correct ? '✓ Correct' : '✗ Incorrect'} &nbsp;|&nbsp;
+              Q5 (Spread Measure): ${q5Correct ? '✓ Correct' : '✗ Incorrect'}
+            </div>
+          </div>
+        `;
+      });
+
+      resultsHtml += `
+        </div>
+        <div class="button-group">
+          <button class="btn btn-primary" onclick="resetQuiz()">Try Again</button>
+          <button class="btn btn-secondary" onclick="showTab('explore')">Review the Concepts</button>
+        </div>
+      `;
+
+      document.getElementById('resultsContent').innerHTML = resultsHtml;
+    }
+
+    function resetQuiz() {
+      currentVariable = 0;
+      currentQuestion = 4;
+      answers = { q4: [null, null, null, null], q5: [null, null, null, null] };
+      selectedOptions = { q4: [null, null, null, null], q5: [null, null, null, null] };
+      answered = { q4: [false, false, false, false], q5: [false, false, false, false] };
+      showTab('practice');
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
