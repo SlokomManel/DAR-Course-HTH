@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#091128">
+<title>Variables Stories – Week 3</title>
+<style>
+  :root {
+    color-scheme:dark;
+    --bg:#091128; --glow:#1b2c63; --ink:#f4f7ff; --muted:#9db0d8; --line:rgba(157,176,216,.22); --glass:rgba(255,255,255,.06);
+    --accent:#6ec6f5; --gold:#f6d06f; --iv:#f2a5a1; --dv:#64dcbf; --good:#7be0a8; --bad:#ffb86b;
+    --sans:"Poppins","Raleway",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --serif:"Larken","Iowan Old Style",Georgia,serif;
+  }
+  *,*::before,*::after { box-sizing:border-box; }
+  * { margin:0; }
+  html,body { height:100%; }
+  body { background:#050a1a; color:var(--ink); font:400 1rem/1.55 var(--sans); display:grid; place-items:center; -webkit-text-size-adjust:100%; }
+
+  /* ---------- the story column ---------- */
+  .story { position:relative; width:100%; max-width:30rem; height:100dvh; max-height:60rem; display:flex; flex-direction:column; overflow:hidden;
+    background:radial-gradient(60% 40% at 50% 28%, var(--glow), transparent 70%), var(--bg); isolation:isolate; }
+  .story::before { content:""; position:absolute; inset:0; z-index:-1; opacity:.5; background-image:radial-gradient(rgba(157,176,216,.35) 1px, transparent 1.2px); background-size:26px 26px; mask-image:linear-gradient(#000 20%, transparent 90%); }
+  @media (min-width:34rem) { .story { height:min(100dvh - 2rem, 60rem); border-radius:30px; box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 1px var(--line); } }
+
+  .bars { display:flex; gap:.3rem; padding:max(.9rem,env(safe-area-inset-top)) 1.2rem .2rem; }
+  .bars i { flex:1; height:.28rem; border-radius:99px; background:rgba(157,176,216,.25); overflow:hidden; }
+  .bars i.on { background:var(--ink); }
+  .bars i.now { background:linear-gradient(90deg,var(--ink),var(--accent)); }
+
+  .head { display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem .4rem; }
+  .badge { flex:none; width:3.4rem; height:3.4rem; border-radius:50%; background:var(--accent); color:#06122b; display:grid; place-items:center; font:800 1.7rem var(--sans); }
+  .eyebrow { font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); }
+  h1 { font:800 clamp(1.6rem,6.4vw,2.15rem)/1.08 var(--sans); letter-spacing:-.025em; }
+  .ul { display:block; width:3.4rem; height:.22rem; border-radius:99px; background:var(--accent); margin-top:.45rem; }
+  h1:focus { outline:none; }
+
+  .body { flex:1; overflow-y:auto; overflow-x:hidden; padding:.6rem 1.2rem 1rem; scrollbar-width:none; }
+  .body::-webkit-scrollbar { display:none; }
+  .scr > * + * { margin-top:1.1rem; }
+  .lead { font-size:1.05rem; color:var(--muted); text-wrap:pretty; }
+  .lead b { color:var(--ink); font-weight:700; }
+  .tiny { font-size:.8rem; color:var(--muted); }
+
+  .nav { display:flex; gap:.7rem; padding:.7rem 1.2rem max(1rem,env(safe-area-inset-bottom)); align-items:center; }
+  .nav .hint { flex:1; font-size:.78rem; color:var(--muted); text-align:center; }
+  .btn { font:700 .95rem var(--sans); min-height:3rem; padding-inline:1.5rem; border-radius:99px; border:2px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#06122b; }
+  .btn.primary:disabled { opacity:.35; cursor:not-allowed; }
+  .btn:focus-visible, .choice:focus-visible, .chip:focus-visible, input:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
+  .nav .btn.primary { flex:1; }
+
+  /* ---------- screen 1: variable and values ---------- */
+  .varbig { text-align:center; margin-top:1.6rem; }
+  .varbig .lab { font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .varbig .nm { font:800 2.6rem/1.1 var(--sans); letter-spacing:-.03em; margin-top:.2rem; }
+  .arrowdown { text-align:center; font-size:1.6rem; color:var(--accent); line-height:1; margin-top:.8rem; }
+  .chips { display:flex; flex-wrap:wrap; gap:.6rem; justify-content:center; margin-top:.8rem; }
+  .chip { padding:.55rem 1.1rem; border-radius:99px; background:var(--glass); border:1.5px solid var(--line); font-weight:600; }
+  .chip.num { border-color:var(--gold); color:var(--gold); }
+
+  /* ---------- flashcards (sort + ladder) ---------- */
+  .count { display:flex; justify-content:space-between; font-size:.8rem; font-weight:600; color:var(--muted); }
+  .flash { margin-top:.9rem; padding:1.6rem 1.3rem; border-radius:24px; background:var(--glass); border:1.5px solid var(--line); text-align:center; backdrop-filter:blur(4px); }
+  .flash .fq { font:800 1.7rem/1.15 var(--sans); letter-spacing:-.02em; }
+  .flash .fv { margin-top:.6rem; font:italic 1.1rem var(--serif); color:var(--muted); }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; margin-top:1rem; }
+  .choice { font:700 1rem var(--sans); padding:.9rem .6rem; border-radius:18px; border:2px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; min-height:4rem; }
+  .choice small { display:block; font-weight:500; font-size:.74rem; color:var(--muted); margin-top:.1rem; }
+  .choice:hover:not(:disabled) { border-color:var(--accent); }
+  .choice.right { border-color:var(--good); background:rgba(123,224,168,.12); }
+  .choice.wrong { border-color:var(--bad); background:rgba(255,184,107,.12); }
+  .choice:disabled { cursor:default; }
+  .fbk { margin-top:1rem; padding-left:.9rem; border-left:3px solid var(--line); min-height:3.6rem; }
+  .fbk.ok { border-color:var(--good); } .fbk.no { border-color:var(--bad); }
+  .fbk b { display:block; } .fbk.ok b { color:var(--good); } .fbk.no b { color:var(--bad); }
+  .minibtn { margin-top:1rem; width:100%; }
+
+  .rungrow { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; margin-top:1rem; }
+  .rg { text-align:center; padding:.5rem .2rem; border-radius:14px; border:1.5px solid var(--line); font-size:.78rem; font-weight:700; color:var(--muted); transition:opacity .25s, border-color .25s, background .25s; }
+  .rg.reach { border-color:var(--accent); color:var(--ink); } .rg.dim { opacity:.3; }
+  .rg.on { background:var(--accent); border-color:var(--accent); color:#06122b; }
+  .rg.good { background:var(--good); border-color:var(--good); color:#06241a; }
+
+  /* ---------- IV and DV definitions ---------- */
+  .quoteline { font:italic 1.25rem/1.35 var(--serif); }
+  .quoteline b { font-style:normal; font-family:var(--sans); }
+  .defs { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .def h3 { font:800 1.15rem var(--sans); }
+  .def.iv h3 { color:var(--iv); } .def.dv h3 { color:var(--dv); }
+  .def ul { list-style:none; padding:0; margin-top:.5rem; display:grid; gap:.5rem; font-size:.9rem; color:var(--muted); }
+  .def li { padding-left:.9rem; position:relative; }
+  .def li::before { content:""; position:absolute; left:0; top:.55em; width:.4rem; height:.4rem; border-radius:50%; background:currentColor; }
+  .def.iv li::before { background:var(--iv); } .def.dv li::before { background:var(--dv); }
+  .def li b { color:var(--ink); }
+
+  /* ---------- simulator ---------- */
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
+  .cause .lab { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--iv); }
+  .cause .nm { font:800 1.02rem/1.15 var(--sans); margin-top:.15rem; }
+  .cause .big { font:800 2rem/1 var(--sans); letter-spacing:-.04em; color:var(--iv); margin-top:.4rem; font-variant-numeric:tabular-nums; }
+  .cause .big small { font:600 .75rem var(--sans); color:var(--muted); letter-spacing:0; margin-left:.1rem; }
+  .cause .st { font-size:.78rem; color:var(--iv); font-weight:600; min-height:1.2em; }
+  .cause .lv { font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+  input[type=range] {
+    --slider-track-size:.3rem; --slider-thumb-size:1.7rem; --attr-min:0; --attr-max:100; --control-value:50;
+    --slider-progress:calc((var(--control-value) - var(--attr-min)) / (var(--attr-max) - var(--attr-min)) * 100%);
+    appearance:none; inline-size:100%; block-size:2.6rem; margin:.1rem 0 0; padding:0; border:0; background:transparent; cursor:pointer; touch-action:pan-y;
+  }
+  input[type=range]::-webkit-slider-runnable-track { block-size:var(--slider-track-size); border-radius:99px; background:linear-gradient(to right,var(--iv) var(--slider-progress),rgba(157,176,216,.3) var(--slider-progress)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; inline-size:var(--slider-thumb-size); block-size:var(--slider-thumb-size);
+    margin-block-start:calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2); border:3px solid var(--bg); border-radius:50%; background:var(--iv); box-shadow:0 0 0 2px var(--iv); }
+  input[type=range]::-moz-range-track { block-size:var(--slider-track-size); border-radius:99px; background:rgba(157,176,216,.3); }
+  input[type=range]::-moz-range-progress { block-size:var(--slider-track-size); border-radius:99px; background:var(--iv); }
+  input[type=range]::-moz-range-thumb { inline-size:var(--slider-thumb-size); block-size:var(--slider-thumb-size); box-sizing:border-box; border:3px solid var(--bg); border-radius:50%; background:var(--iv); box-shadow:0 0 0 2px var(--iv); }
+  .flowsvg { display:block; width:100%; height:3.6rem; overflow:visible; margin-top:.2rem; }
+  .flowsvg .base { fill:none; stroke:var(--iv); stroke-linecap:round; opacity:.3; vector-effect:non-scaling-stroke; transition:stroke-width .3s; }
+  .flowsvg .flow { fill:none; stroke:var(--iv); stroke-linecap:round; stroke-dasharray:.1 13; vector-effect:non-scaling-stroke; transition:stroke-width .3s, opacity .3s; }
+  .effs { display:grid; grid-template-columns:1fr 1fr; text-align:center; font-size:.78rem; font-weight:700; color:var(--iv); margin-top:-.2rem; }
+  .dvbox { text-align:center; position:relative; margin-top:.2rem; }
+  .dvbox::before { content:""; position:absolute; left:50%; top:46%; width:15rem; height:11rem; translate:-50% -50%; background:radial-gradient(closest-side, rgba(100,220,191,.22), transparent); z-index:-1; }
+  .dvbox .lab { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--dv); }
+  .dvbox .nm { font:800 1.05rem var(--sans); }
+  .score { font:800 4.6rem/1 var(--sans); letter-spacing:-.05em; color:var(--dv); font-variant-numeric:tabular-nums; margin-top:.2rem; }
+  .score small { font:600 1rem var(--sans); color:var(--muted); letter-spacing:0; margin-left:.2rem; }
+  .stars { display:flex; justify-content:center; gap:.2rem; margin-top:.2rem; }
+  .stars svg { width:1.7rem; fill:var(--gold); stroke:var(--gold); stroke-width:1.3; stroke-linejoin:round; transition:fill .25s, opacity .25s; }
+  .stars .off { fill:transparent; opacity:.5; }
+  .quote { font:italic 1.08rem/1.35 var(--serif); margin-top:.7rem; min-height:3rem; color:var(--ink); }
+  .quote::before { content:"“"; color:var(--dv); }
+
+  /* ---------- levels intro and recap ---------- */
+  .stack { display:grid; gap:.7rem; }
+  .lvrow { display:grid; grid-template-columns:2.2rem 1fr; gap:.8rem; align-items:start; padding:.8rem 0; border-top:1px solid var(--line); }
+  .lvrow .k { font:800 1.3rem var(--sans); color:var(--accent); }
+  .lvrow b { font:800 1.1rem var(--sans); display:block; }
+  .lvrow span { font-size:.86rem; color:var(--muted); display:block; }
+  .recap { list-style:none; padding:0; display:grid; gap:.9rem; }
+  .recap li { display:grid; grid-template-columns:2rem 1fr; gap:.6rem; align-items:start; }
+  .recap .tick { width:1.6rem; height:1.6rem; border-radius:50%; background:var(--good); color:#06241a; display:grid; place-items:center; font-weight:800; font-size:.85rem; }
+  .recap b { color:var(--ink); }
+  .disc { font-size:.74rem; color:var(--muted); padding-top:.8rem; border-top:1px solid var(--line); }
+  .disc b { color:var(--ink); }
+
+  /* ---------- motion ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .scr { animation:in .38s cubic-bezier(.2,.8,.2,1); } @keyframes in { from { opacity:0; transform:translateY(.7rem); } }
+    .pop { animation:pop .45s cubic-bezier(.3,1.5,.5,1) backwards; } @keyframes pop { from { opacity:0; transform:scale(.7); } }
+    .flowsvg .flow { animation:march var(--dur,2s) linear infinite; } @keyframes march { to { stroke-dashoffset:-13.1; } }
+    .score.bump { animation:bump .4s cubic-bezier(.3,1.6,.5,1); } @keyframes bump { from { transform:scale(.9); opacity:.5; } }
+    .bars i.now { background-size:200% 100%; animation:shine 2.4s linear infinite; } @keyframes shine { to { background-position:-200% 0; } }
+    .lvrow { animation:in .5s backwards; }
+    .lvrow:nth-child(1) { animation-delay:.05s; } .lvrow:nth-child(2) { animation-delay:.2s; } .lvrow:nth-child(3) { animation-delay:.35s; } .lvrow:nth-child(4) { animation-delay:.5s; }
+  }
+  /* compact simulator so the effect stays on screen while the sliders move */
+  .cause .st { min-height:0; } .cause .big { font-size:1.7rem; margin-top:.25rem; }
+  .cause input[type=range] { block-size:2.3rem; }
+  .flowsvg { height:2.2rem; margin-top:0; } .effs { margin-top:-.1rem; }
+  .dvbox .lab { display:block; } .dvbox .nm { font-size:.95rem; }
+  .score { font-size:3.6rem; margin-top:0; } .stars svg { width:1.45rem; }
+  .quote { font-size:1rem; min-height:2.6rem; margin-top:.4rem; }
+  #body .scr > .cols + .flowsvg { margin-top:.5rem; }
+  @media (max-width:24rem) { .defs { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="story" id="story">
+  <div class="bars" id="bars" role="progressbar" aria-label="Story progress" aria-valuemin="1"></div>
+  <header class="head"><div class="badge" id="badge" aria-hidden="true">1</div><div><div class="eyebrow" id="eyebrow"></div><h1 id="title" tabindex="-1"></h1><span class="ul" aria-hidden="true"></span></div></header>
+  <main class="body" id="body"></main>
+  <nav class="nav"><button class="btn" id="back" type="button" aria-label="Previous screen">←</button><span class="hint" id="hint"></span><button class="btn primary" id="next" type="button">Continue</button></nav>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+const W_CLEAN = 0.6, W_FRIEND = 0.4;                               // built-in influence (simulation only)
+let idx = 0; const done = {};                                       // done[i] = activity on screen i finished
+
+/* ============ screens ============ */
+const SCREENS = [
+  { ch:'Variables & values', n:1, title:'What is a variable?', build:buildIntro },
+  { ch:'Variables & values', n:1, title:'Sort the variables', build:buildSort, gate:true },
+  { ch:'Independent & dependent', n:2, title:'Cause and effect', build:buildDefs },
+  { ch:'Independent & dependent', n:2, title:'Two causes, one effect', build:buildSim },
+  { ch:'Levels of measurement', n:3, title:'Four levels', build:buildLevels },
+  { ch:'Levels of measurement', n:3, title:'Climb the ladder', build:buildLadder, gate:true },
+  { ch:'Done', n:'✓', title:'What you learned', build:buildRecap }
+];
+
+function go(i) {
+  idx = Math.max(0, Math.min(SCREENS.length - 1, i));
+  const s = SCREENS[idx];
+  $('bars').innerHTML = SCREENS.map((_, k) => `<i class="${k < idx ? 'on' : k === idx ? 'on now' : ''}"></i>`).join('');
+  $('bars').setAttribute('aria-valuemax', SCREENS.length); $('bars').setAttribute('aria-valuenow', idx + 1);
+  $('badge').textContent = s.n; $('eyebrow').textContent = `${s.ch} · ${idx + 1} of ${SCREENS.length}`; $('title').textContent = s.title;
+  document.title = s.title + ' – Week 3';
+  const body = $('body'); body.innerHTML = ''; const scr = document.createElement('div'); scr.className = 'scr'; body.appendChild(scr); body.scrollTop = 0;
+  s.build(scr);
+  refreshNav();
+  $('title').focus({ preventScroll: true });
+}
+function refreshNav() {
+  const s = SCREENS[idx], last = idx === SCREENS.length - 1, locked = s.gate && !done[idx];
+  $('back').style.visibility = idx ? 'visible' : 'hidden';
+  $('next').textContent = last ? 'Start again' : 'Continue'; $('next').disabled = !!locked;
+  $('hint').textContent = locked ? 'Finish the activity to continue' : '';
+}
+function finish() { done[idx] = true; refreshNav(); }
+$('next').addEventListener('click', () => idx === SCREENS.length - 1 ? go(0) : go(idx + 1));
+$('back').addEventListener('click', () => go(idx - 1));
+addEventListener('keydown', e => { if (e.target.closest('input,button,select')) return; if (e.key === 'ArrowRight' && !$('next').disabled) $('next').click(); if (e.key === 'ArrowLeft' && idx) go(idx - 1); });
+let tx = null;
+$('story').addEventListener('touchstart', e => { tx = e.target.closest('input,button') ? null : e.touches[0].clientX; }, { passive:true });
+$('story').addEventListener('touchend', e => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (dx < -70 && !$('next').disabled && idx < SCREENS.length - 1) go(idx + 1); if (dx > 70 && idx) go(idx - 1); });
+
+/* ============ 1 · what is a variable ============ */
+function buildIntro(el) {
+  el.innerHTML = `<p class="lead">A <b>variable</b> is what you measure. <b>Values</b> are what it can be.</p>
+    <div class="varbig"><div class="lab">Variable</div><div class="nm">Nationality</div></div>
+    <div class="arrowdown" aria-hidden="true">↓</div>
+    <div class="chips" aria-label="Values"><span class="chip pop" style="animation-delay:.1s">Dutch</span><span class="chip pop" style="animation-delay:.25s">German</span><span class="chip pop" style="animation-delay:.4s">British</span></div>
+    <p class="tiny" style="text-align:center">These are the values of the variable.</p>
+    <div class="varbig" style="margin-top:2rem"><div class="lab">Variable</div><div class="nm">Length of stay</div></div>
+    <div class="arrowdown" aria-hidden="true">↓</div>
+    <div class="chips"><span class="chip num pop" style="animation-delay:.6s">1 night</span><span class="chip num pop" style="animation-delay:.75s">2 nights</span><span class="chip num pop" style="animation-delay:.9s">5 nights</span></div>
+    <p class="lead" style="margin-top:1.6rem">Some values are <b>words</b> (qualitative). Some are <b>numbers</b> (quantitative). Next, you sort them.</p>
+    <p class="disc"><b>AI disclosure:</b> the idea, method and description are by Manel Slokom. Claude (Anthropic) helped with the styling.</p>`;
+}
+
+/* ============ 2 · sort deck ============ */
+const CARDS = [
+  { n:'Nationality',               v:'Dutch, German, British',             a:'qual',  why:'Names. No numbers to calculate with.' },
+  { n:'Length of stay',            v:'1, 2, 5 nights',                     a:'quant', why:'Numbers you can calculate with.' },
+  { n:'Booking channel',           v:'website, phone, agent',              a:'qual',  why:'Categories, no numbers.' },
+  { n:'Room temperature',          v:'19°, 21°, 23°',                      a:'quant', why:'Numbers.' },
+  { n:'Hotel star category',       v:'3-star, 4-star, 5-star',             a:'qual',  why:'Categories. They have an order, but they are still categories.' },
+  { n:'Age of the guest',          v:'24, 37, 61',                         a:'quant', why:'Numbers you can calculate with.' },
+  { n:'Breakfast included',        v:'yes / no',                           a:'qual',  why:'Two categories.' },
+  { n:'Satisfaction with the room',v:'very unsatisfied … very satisfied',  a:'qual',  why:'Answer categories in words, with an order.' },
+  { n:'Room price per night',      v:'€95, €140, €210',                    a:'quant', why:'Numbers.' },
+  { n:'Number of complaints',      v:'0, 2, 5',                            a:'quant', why:'A count: real numbers.' }
+];
+let ci = 0, cScore = 0, cMissed = [];
+function buildSort(el) {
+  if (done[idx]) { sortEnd(el); return; }
+  const c = CARDS[ci];
+  el.innerHTML = `<p class="lead">Are the values <b>words</b> or <b>numbers</b>?</p>
+    <div class="count"><span>Card ${ci + 1} of ${CARDS.length}</span><span>${cScore} correct</span></div>
+    <div class="flash"><div class="fq">${c.n}</div><div class="fv">${c.v}</div></div>
+    <div class="two"><button class="choice" data-a="qual" type="button">Qualitative<small>categories, names</small></button><button class="choice" data-a="quant" type="button">Quantitative<small>numbers</small></button></div>
+    <div class="fbk" id="fbk" role="status"></div>`;
+  el.querySelectorAll('.choice').forEach(b => b.onclick = () => {
+    const ok = b.dataset.a === c.a; if (ok) cScore++; else cMissed.push(ci);
+    el.querySelectorAll('.choice').forEach(x => { x.disabled = true; if (x.dataset.a === c.a) x.classList.add('right'); });
+    if (!ok) b.classList.add('wrong');
+    $('fbk').className = 'fbk ' + (ok ? 'ok' : 'no'); $('fbk').innerHTML = `<b>${ok ? 'Correct' : 'Not quite'}</b>${c.why}`;
+    const nb = document.createElement('button'); nb.className = 'btn primary minibtn'; nb.type = 'button'; nb.textContent = ci === CARDS.length - 1 ? 'See my result' : 'Next card';
+    nb.onclick = () => { ci++; if (ci >= CARDS.length) { done[idx] = true; refreshNav(); } buildSort(el); }; el.appendChild(nb); nb.focus();
+  });
+}
+function sortEnd(el) {
+  el.innerHTML = `<div class="flash"><div class="fq">${cScore} of ${CARDS.length}</div><div class="fv">correct</div></div>
+    ${cMissed.length ? `<p class="lead">Look again at: ${cMissed.map(i => `<b>${CARDS[i].n}</b> (${CARDS[i].a === 'qual' ? 'qualitative' : 'quantitative'})`).join(', ')}.</p>` : '<p class="lead"><b>No mistakes.</b> Well done.</p>'}
+    <button class="btn minibtn" id="again" type="button">Try again</button>`;
+  $('again').onclick = () => { ci = 0; cScore = 0; cMissed = []; done[idx] = false; refreshNav(); buildSort(el); };
+}
+
+/* ============ 3 · IV and DV (slide wording) ============ */
+function buildDefs(el) {
+  el.innerHTML = `<p class="quoteline">The independent variable is the <b style="color:var(--iv)">cause</b>; the dependent variable is the <b style="color:var(--dv)">effect</b>.</p>
+    <div class="defs">
+      <div class="def iv"><h3>Independent variable (IV)</h3><ul><li>The variable you <b>change or control</b></li><li>It is the <b>cause</b></li><li>Does not depend on other variables</li><li>Also called <b>predictor</b></li></ul></div>
+      <div class="def dv"><h3>Dependent variable (DV)</h3><ul><li>The variable you <b>measure or observe</b></li><li>It is the <b>effect</b> or outcome</li><li>Depends on the independent variable</li><li>Also called <b>outcome</b></li></ul></div>
+    </div>
+    <p class="lead"><b>Scenario:</b> a hotel manager wants to measure the effect of room cleanliness and staff friendliness on the guest rating. Which are the IVs? Which is the DV? Find out next.</p>`;
+}
+
+/* ============ 4 · simulator ============ */
+let sc = 30, sf = 3, lastStars = null;
+const ROOM = [[20,'Very dirty'],[40,'Needs cleaning'],[60,'Moderately clean'],[80,'Clean'],[101,'Spotless']];
+const STAFF = ['Cold','Unfriendly','Neutral','Friendly','Very friendly'];
+const MSG = {
+  'dirty|cold':'Dirty room and rude staff. Never again.', 'dirty|neutral':'The room was dirty. Staff did not help.', 'dirty|friendly':'Lovely staff, but the room was dirty.',
+  'okay|cold':'Room was fine, but the staff were cold.', 'okay|neutral':'Average stay. Nothing special.', 'okay|friendly':'Friendly staff, room could be cleaner.',
+  'spotless|cold':'Spotless room, but the staff made us feel unwelcome.', 'spotless|neutral':'Very clean room. Good stay.', 'spotless|friendly':'Spotless room and wonderful staff. We will return.'
+};
+function sync(el) { el.style.setProperty('--attr-min', el.min || 0); el.style.setProperty('--attr-max', el.max || 100); el.style.setProperty('--control-value', el.value); }
+function buildSim(el) {
+  lastStars = null;
+  el.innerHTML = `<div class="cols">
+      <div class="cause"><div class="lab">Cause 1 · IV</div><div class="nm">Room cleanliness</div><div class="big"><span id="v1"></span><small>%</small></div><div class="st" id="t1"></div>
+        <input type="range" id="s1" min="0" max="100" aria-label="Room cleanliness, percent"><div class="lv">ratio</div></div>
+      <div class="cause"><div class="lab">Cause 2 · IV</div><div class="nm">Staff friendliness</div><div class="big"><span id="v2"></span><small>/5</small></div><div class="st" id="t2"></div>
+        <input type="range" id="s2" min="1" max="5" step="1" aria-label="Staff friendliness, 1 to 5"><div class="lv">ordinal</div></div>
+    </div>
+    <svg class="flowsvg" viewBox="0 0 100 44" preserveAspectRatio="none" aria-hidden="true">
+      <path id="b1" class="base" d="M25 0 C25 26 50 16 50 44"/><path id="b2" class="base" d="M75 0 C75 26 50 16 50 44"/>
+      <path id="f1" class="flow" d="M25 0 C25 26 50 16 50 44"/><path id="f2" class="flow" d="M75 0 C75 26 50 16 50 44"/>
+    </svg>
+    <div class="effs" aria-hidden="true"><span id="e1"></span><span id="e2"></span></div>
+    <div class="dvbox" role="status"><div class="lab">Effect · DV</div><div class="nm">Guest rating</div>
+      <div class="score" id="sbox"><span id="rv">1</span><small>/5</small></div><div class="stars" id="stars" aria-hidden="true"></div>
+      <div class="quote" id="rev"></div><div class="tiny" style="margin-top:.4rem">ordinal · 1 to 5 stars</div></div>
+    <p class="tiny">The effects here are simulated. Real managers must measure them, for example with a survey.</p>`;
+  $('s1').value = sc; $('s2').value = sf;
+  $('s1').addEventListener('input', simUpdate); $('s2').addEventListener('input', simUpdate);
+  simUpdate();
+}
+function simUpdate() {
+  sc = +$('s1').value; sf = +$('s2').value; sync($('s1')); sync($('s2'));
+  const room = ROOM.find(r => sc < r[0])[1];
+  $('v1').textContent = sc; $('t1').textContent = room; $('v2').textContent = sf; $('t2').textContent = STAFF[sf - 1];
+  $('s1').setAttribute('aria-valuetext', sc + ' percent, ' + room); $('s2').setAttribute('aria-valuetext', sf + ' of 5, ' + STAFF[sf - 1]);
+  const c1 = 4 * W_CLEAN * sc / 100, c2 = 4 * W_FRIEND * (sf - 1) / 4, stars = Math.min(5, Math.max(1, Math.round(1 + c1 + c2)));
+  [c1, c2].forEach((v, i) => {
+    const share = v / (4 * W_CLEAN), n = i + 1, w = 2 + share * 8;
+    $('b' + n).style.strokeWidth = w; const f = $('f' + n); f.style.strokeWidth = Math.max(3, w * .55); f.style.opacity = share < .04 ? 0 : 1; f.style.setProperty('--dur', (2.6 - share * 1.7).toFixed(2) + 's');
+    $('e' + n).textContent = share < .08 ? 'no effect' : share < .35 ? 'small' : share < .7 ? 'medium' : 'big';
+  });
+  $('stars').innerHTML = [1,2,3,4,5].map(i => STAR.replace('<svg', `<svg class="${i <= stars ? 'on' : 'off'}"`)).join('');
+  $('rv').textContent = stars; $('rv').parentElement.setAttribute('aria-label', 'Guest rating ' + stars + ' out of 5');
+  if (lastStars !== null && lastStars !== stars) { const b = $('sbox'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
+  lastStars = stars;
+  $('rev').textContent = MSG[(sc < 35 ? 'dirty' : sc < 70 ? 'okay' : 'spotless') + '|' + (sf <= 2 ? 'cold' : sf === 3 ? 'neutral' : 'friendly')];
+}
+
+/* ============ 5 · four levels (slide 21 wording) ============ */
+const LV = [
+  { k:'ratio',    n:'Ratio',    d:'Numbers · differences can be compared · absolute zero, so ratios can be calculated' },
+  { k:'interval', n:'Interval', d:'Numbers · differences between values can be compared' },
+  { k:'ordinal',  n:'Ordinal',  d:'Categories or names · can be put in a logical order' },
+  { k:'nominal',  n:'Nominal',  d:'Categories or names · cannot be ordered' }
+];
+function buildLevels(el) {
+  el.innerHTML = `<p class="lead">Every variable has a <b>level of measurement</b>.</p>
+    <div class="stack">${LV.map((l, i) => `<div class="lvrow"><span class="k">${4 - i}</span><div><b>${l.n}</b><span>${l.d}</span></div></div>`).join('')}</div>
+    <p class="tiny">Numbers: ratio or interval. Words and names: ordinal or nominal.</p>`;
+}
+
+/* ============ 6 · ladder deck ============ */
+const ITEMS = [
+  { q:'What car do you own?',                     v:'Toyota, Volkswagen, Tesla',         a:'nominal',  why:'Names. You cannot put them in a logical order.' },
+  { q:'How satisfied are you with your room?',   v:'very unsatisfied … very satisfied', a:'ordinal',  why:'Categories (words) that can be put in a logical order.' },
+  { q:'What is the star category of the hotel?', v:'3-star, 4-star, 5-star',            a:'ordinal',  why:'Category labels that can be put in a logical order.' },
+  { q:'What is the room temperature?',            v:'19°C, 21°C, 23°C',                  a:'interval', why:'Numbers, and differences can be compared. But 0°C does not mean “no temperature”: no absolute zero.' },
+  { q:'How many nights did you stay?',            v:'1, 2, 5 nights',                    a:'ratio',    why:'Numbers with an absolute zero (0 nights = no stay). 4 nights is twice as much as 2.' },
+  { q:'What is your nationality?',                v:'Dutch, German, British',            a:'nominal',  why:'Names. No logical order.' },
+  { q:'What is the room price per night?',        v:'€95, €140, €210',                   a:'ratio',    why:'Numbers with an absolute zero (€0). €200 is twice as much as €100.' },
+  { q:'At what time did you check in?',           v:'14:00, 15:30, 18:00 (clock time)',  a:'interval', why:'Numbers, and differences can be compared. But 00:00 does not mean “no time”: no absolute zero.' }
+];
+const Q1 = { t:'Step 1 of 2', q:'Are the values numbers, or names (categories)?', s:'', yes:'Numbers', no:'Names' };
+const Q2 = { names:   { t:'Step 2 of 2', q:'Can you put the values in a logical order?', s:'For example from low to high.', yes:'Yes, in order', no:'No order' },
+             numbers: { t:'Step 2 of 2', q:'Is there an absolute zero?', s:'Zero means “none of it”. Then 40 is twice as much as 20.', yes:'Yes', no:'No' } };
+let li = 0, lpath = [], lscore = 0, lmissed = [];
+const levelOf = p => p[0] ? (p[1] ? 'ratio' : 'interval') : (p[1] ? 'ordinal' : 'nominal');
+function rungRow(on, good, reach) {
+  return `<div class="rungrow">${LV.map(l => `<div class="rg ${l.k === on ? (good ? 'good' : 'on') : reach ? (reach.includes(l.k) ? 'reach' : 'dim') : ''}">${l.n}</div>`).join('')}</div>`;
+}
+function buildLadder(el, fb) {
+  if (done[idx] && !fb) {
+    el.innerHTML = `<div class="flash"><div class="fq">${lscore} of ${ITEMS.length}</div><div class="fv">correct</div></div>
+      ${lmissed.length ? `<p class="lead">Look again at: ${lmissed.map(i => `<b>${ITEMS[i].q}</b> (${ITEMS[i].a})`).join('; ')}.</p>` : '<p class="lead"><b>No mistakes.</b> Well done.</p>'}
+      <button class="btn minibtn" id="again" type="button">Try again</button>`;
+    $('again').onclick = () => { li = 0; lpath = []; lscore = 0; lmissed = []; done[idx] = false; refreshNav(); buildLadder(el); };
+    return;
+  }
+  const it = ITEMS[li];
+  const top = `<div class="count"><span>Question ${li + 1} of ${ITEMS.length}</span><span>${lscore} correct</span></div>
+    <div class="flash"><div class="fq">${it.q}</div><div class="fv">${it.v}</div></div>`;
+  if (fb) {
+    const got = levelOf(lpath), ok = got === it.a;
+    el.innerHTML = top + rungRow(got, ok) + `<div class="fbk ${ok ? 'ok' : 'no'}" role="status"><b>${ok ? 'Correct: ' + got : 'You said ' + got + '. The answer is ' + it.a + '.'}</b>${it.why}</div>
+      <button class="btn primary minibtn" id="nq" type="button">${li === ITEMS.length - 1 ? 'See my result' : 'Next question'}</button>`;
+    if (ok) lscore++; else lmissed.push(li);
+    $('nq').onclick = () => { li++; lpath = []; if (li >= ITEMS.length) { done[idx] = true; refreshNav(); } buildLadder(el); };
+    $('nq').focus();
+    return;
+  }
+  const s = lpath.length === 0 ? Q1 : (lpath[0] ? Q2.numbers : Q2.names);
+  el.innerHTML = top + rungRow(null, false, lpath.length ? (lpath[0] ? ['ratio','interval'] : ['ordinal','nominal']) : null) +
+    `<div style="margin-top:1.1rem"><div class="eyebrow">${s.t}</div><div style="font:800 1.2rem/1.25 var(--sans);margin-top:.2rem">${s.q}</div>${s.s ? `<div class="tiny" style="margin-top:.2rem">${s.s}</div>` : ''}</div>
+    <div class="two"><button class="choice" data-a="1" type="button">${s.yes}</button><button class="choice" data-a="0" type="button">${s.no}</button></div>`;
+  el.querySelectorAll('.choice').forEach(b => b.onclick = () => { lpath.push(b.dataset.a === '1'); buildLadder(el, lpath.length === 2); });
+}
+
+/* ============ 7 · recap ============ */
+function buildRecap(el) {
+  el.innerHTML = `<ul class="recap">
+    <li><span class="tick">✓</span><span><b>Variables and values.</b> A variable is what you measure. Values are what it can be: words (qualitative) or numbers (quantitative).</span></li>
+    <li><span class="tick">✓</span><span><b>Independent variable (IV).</b> The cause: the variable you change or control.</span></li>
+    <li><span class="tick">✓</span><span><b>Dependent variable (DV).</b> The effect: the variable you measure. It depends on the IV.</span></li>
+    <li><span class="tick">✓</span><span><b>Levels of measurement.</b> Nominal, ordinal, interval, ratio.</span></li>
+  </ul>
+  <p class="disc"><b>AI disclosure:</b> the idea, method and description are by Manel Slokom. Claude (Anthropic) helped with the styling. Data in this lab are simulated for teaching.</p>`;
+}
+
+go(0);
+</script>
+</body>
+</html>
